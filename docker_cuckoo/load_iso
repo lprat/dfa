@@ -1,0 +1,3 @@
+install vbox & load kernel
+mkdir /mnt/win7
+mount -o loop,ro win7.iso /mnt/win7

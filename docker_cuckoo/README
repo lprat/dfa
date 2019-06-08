@@ -1,0 +1,21 @@
+-Virer phpvirtaulbox
+-utilisation X11 ou rdp
+-Le kernel doit être la meme version entre le docker & contener!!!
+-2 possibiltié: utilisation de virtaulbox dans docker ou exterieur avec vboxweb & module cuckoo (backtop)
+-utilisation des ISO windows open
+-vmcloak pour install rapide (donner un coup de main sur la partie install (choix langue)
+-vmcloak init --win7x64 seven0 --product homebasic
+-vmcloak install seven0 adobe9 wic pillow dotnet40 java7
+http://jbremer.org/vmcloak3/
+vmcloak snapshot seven0 cuckoo1 192.168.56.101
+
+------
+Features:
+- SSL
+- Authentification
+- remote control
+- mitmproxy
+- dnsmasq
+
+
+If you want use uppstream proxy in mitm, configure in cuckoo/mitmproxy/config.yaml

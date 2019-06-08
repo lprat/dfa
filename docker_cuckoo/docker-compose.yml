@@ -1,0 +1,95 @@
+#docker-compose up -d
+#DFA: Dynamic File Analysis on virtualbox
+version: '2'
+
+services:
+    mongo:
+        image: mongo
+        volumes:
+          - ../cuckoo/mongo-data/:/data/db
+        ports:
+            - "172.17.0.1:27017:27017"
+
+    postgres:
+        image: postgres
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: cuckoo
+            PGDATA: /var/lib/postgresql/data/pgdata
+            # POSTGRES_INITDB_ARGS: --data-checksums
+        volumes:
+            - ../cuckoo/postgres-data/:/var/lib/postgresql/data/pgdata
+        ports:
+            - "172.17.0.1:5432:5432"
+
+    cuckoo:
+        image: lprat/dfa:latest
+        build:
+            context: .
+            args:
+                - http_proxy=${http_proxy}
+                - https_proxy=${https_proxy}
+                - no_proxy=${no_proxy}
+                - VBOX_VER=5.2
+        #mem_reservation: '512m'
+        #memswap_limit: '1g'
+        #mem_limit: '1g'
+        #cpuset: '1'
+        stdin_open: true
+        tty: true
+        privileged: true
+        network_mode: "host"
+        #ports:#mode host not need to declare port
+        #    - "8000:8000"
+        #    - "8090:8090"
+        #    - "4822:4822"
+        environment:
+            - DISPLAY=${DISPLAY}
+            - http_proxy=${http_proxy}
+            - https_proxy=${https_proxy}
+            - no_proxy=${no_proxy}
+            - WEBPASS=password_to_change
+            - APIPASS=password_to_change
+            - CUCKOO_GUEST_IMAGE=/ova/IE11_Win7.ova
+            - CUCKOO_GUEST_NAME=cuckoo7
+            - CUCKOO_SHARENAME=sharenet
+            - CUCKOO_SHARE=/install_guest/
+            - CUCKOO_GUEST_IP=192.168.56.10
+            - CUCKOO_PLATEFORM=windows
+        depends_on:
+            - mongo
+            - postgres
+#        external_links:
+#            - mongo
+#            - postgres
+        cap_add:
+            - ALL
+#            - SYS_ADMIN
+#            - NET_ADMIN
+        devices:
+            - "/dev/vboxdrvu:/dev/vboxdrvu"
+            - "/dev/vboxnetctl:/dev/vboxnetctl"
+            - "/dev/vboxdrv:/dev/vboxdrv"
+        volumes:
+            - ../cuckoo/cuckoo-tmp/:/tmp/cuckoo-tmp/
+            - ../cuckoo/storage/:/home/cuckoo/.cuckoo/storage/
+            - ../cuckoo/conf/:/home/cuckoo/.cuckoo/conf/
+            - ../cuckoo/vmcloak-conf/:/home/cuckoo/.vmcloak/
+            - ../cuckoo/guest:/install_guest
+            - ../cuckoo/mitmproxy/:/home/cuckoo/.mitmproxy/
+            - ../virtualbox/vbox-guest/:/guest
+            - ../virtualbox/IMG_VIRTUALBOX/:/ova
+            - ../virtualbox/vbrootconf/:/root/.config/VirtualBox/
+            - ../virtualbox/vbcuckooconf/:/home/cuckoo/.config/VirtualBox/
+            - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
+#for mount iso DVD win7 install for vmcloak:            - /mnt/win7:/mnt/win7
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+        #restart: always #for server API
+        #logging:
+        #    driver: "syslog"
+        #    options:
+        #        syslog-address: "tcp://172.17.0.1:514"
+        #        tag: "docker_{{.ImageName}}_{{.Name}}"

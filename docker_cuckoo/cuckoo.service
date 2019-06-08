@@ -1,0 +1,14 @@
+[Unit]
+Description=Main Cuckoo service wrapper
+
+[Service]
+User=cuckoo
+Group=cuckoo
+ExecStart=. venv/bin/activate && cuckoo -d
+WorkingDirectory=/home/cuckoo
+Restart=on-failure
+RestartSec=30s
+TimeoutSec=30s
+
+[Install]
+WantedBy=multi-user.target

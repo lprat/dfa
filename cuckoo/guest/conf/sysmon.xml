@@ -1,0 +1,126 @@
+<Sysmon schemaversion="4.00">
+	<!--SYSMON META CONFIG modified from https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml-->
+	<HashAlgorithms>md5,sha256</HashAlgorithms>
+	<CheckRevocation/> 
+	<EventFiltering>
+
+	<!--SYSMON EVENT ID 1 : PROCESS CREATION [ProcessCreate]-->
+		<!--COMMENT:	All process launched will be included, except for what matches a rule below. It's best to be as specific as possible, to
+			avoid user-mode executables imitating other process names to avoid logging, or if malware drops files in an existing directory.
+			Ultimately, you must weigh CPU time checking many detailed rules, against the risk of malware exploiting the blindness created.
+			Beware of Masquerading, where attackers imitate the names and paths of legitimate tools. Ideally, you'd use both file path and
+			code signatures to validate, but Sysmon does not support that. Look into Windows Device Guard for whitelisting support. -->
+
+		<!--DATA: UtcTime, ProcessGuid, ProcessID, Image, FileVersion, Description, Product, Company, CommandLine, CurrentDirectory, User, LogonGuid, LogonId, TerminalSessionId, IntegrityLevel, Hashes, ParentProcessGuid, ParentProcessId, ParentImage, ParentCommandLine-->
+		<ProcessCreate onmatch="exclude">
+			<!--SECTION: Microsoft Windows-->
+			<ParentCommandLine condition="contains">agent.py</ParentCommandLine>
+		</ProcessCreate>
+
+	<!--SYSMON EVENT ID 2 : FILE CREATION TIME RETROACTIVELY CHANGED IN THE FILESYSTEM [FileCreateTime]-->
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, Image, TargetFilename, CreationUtcTime, PreviousCreationUtcTime-->
+		<FileCreateTime onmatch="exclude">
+		</FileCreateTime>
+
+	<!--SYSMON EVENT ID 3 : NETWORK CONNECTION INITIATED [NetworkConnect]-->
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, Image, User, Protocol, Initiated, SourceIsIpv6, SourceIp, SourceHostname, SourcePort, SourcePortName, DestinationIsIpV6, DestinationIp, DestinationHostname, DestinationPort, DestinationPortName-->
+		<NetworkConnect onmatch="exclude">
+		</NetworkConnect>
+
+	<!--SYSMON EVENT ID 4 : RESERVED FOR SYSMON STATUS MESSAGES-->
+		<!--DATA: UtcTime, State, Version, SchemaVersion-->
+		<!--Cannot be filtered.-->
+
+	<!--SYSMON EVENT ID 5 : PROCESS ENDED [ProcessTerminate]-->
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, Image-->
+		<ProcessTerminate onmatch="exclude">
+		</ProcessTerminate>
+
+	<!--SYSMON EVENT ID 6 : DRIVER LOADED INTO KERNEL [DriverLoad]-->
+		<!--TECHNICAL:	Sysmon will check the signing certificate revocation status of any driver you don't exclude.-->
+
+		<!--DATA: UtcTime, ImageLoaded, Hashes, Signed, Signature, SignatureStatus-->
+		<DriverLoad onmatch="exclude">
+			<Signature condition="contains">microsoft</Signature> <!--Exclude signed Microsoft drivers-->
+			<Signature condition="contains">windows</Signature> <!--Exclude signed Microsoft drivers-->
+			<Signature condition="begin with">Intel </Signature> <!--Exclude signed Intel drivers-->
+		</DriverLoad>
+
+	<!--SYSMON EVENT ID 7 : DLL (IMAGE) LOADED BY PROCESS [ImageLoad]-->
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, Image, ImageLoaded, Hashes, Signed, Signature, SignatureStatus-->
+		<ImageLoad onmatch="exclude">
+		</ImageLoad>
+
+	<!--SYSMON EVENT ID 8 : REMOTE THREAD CREATED [CreateRemoteThread]-->
+		<!--DATA: UtcTime, SourceProcessGuid, SourceProcessId, SourceImage, TargetProcessId, TargetImage, NewThreadId, StartAddress, StartModule, StartFunction-->
+		<CreateRemoteThread onmatch="exclude">
+		</CreateRemoteThread>
+
+	<!--SYSMON EVENT ID 9 : RAW DISK ACCESS [RawAccessRead]-->
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, Image, Device-->
+		<RawAccessRead onmatch="exclude">
+		</RawAccessRead>
+
+	<!--SYSMON EVENT ID 10 : INTER-PROCESS ACCESS [ProcessAccess]-->
+		<!--DATA: UtcTime, SourceProcessGuid, SourceProcessId, SourceThreadId, SourceImage, TargetProcessGuid, TargetProcessId, TargetImage, GrantedAccess, CallTrace-->
+		<ProcessAccess onmatch="exclude">
+		</ProcessAccess>
+
+	<!--SYSMON EVENT ID 11 : FILE CREATED [FileCreate]-->
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, Image, TargetFilename, CreationUtcTime-->
+		<FileCreate onmatch="exclude">
+		</FileCreate>
+
+	<!--SYSMON EVENT ID 12 & 13 & 14 : REGISTRY MODIFICATION [RegistryEvent]-->
+		<!--EVENT 12: "Registry object added or deleted"-->
+		<!--EVENT 13: "Registry value set-->
+		<!--EVENT 14: "Registry objected renamed"-->
+
+		<RegistryEvent onmatch="exclude">
+			<!--Bootup Control noise-->
+			<TargetObject condition="end with">HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Audit</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise--> <!--Win8+-->
+			<TargetObject condition="end with">HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Audit\AuditPolicy</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise--> <!--Win8+-->
+			<TargetObject condition="end with">HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Audit\PerUserAuditing\System</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise--> <!--Win8+-->
+			<TargetObject condition="end with">HKLM\SYSTEM\CurrentControlSet\Control\Lsa\LsaPid</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise-->
+			<TargetObject condition="end with">HKLM\SYSTEM\CurrentControlSet\Control\Lsa\SspiCache</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise--> <!--Win8+-->
+			<TargetObject condition="end with">HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Domains</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise--> <!--Win8+-->
+			<TargetObject condition="end with">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit</TargetObject> <!--Microsoft:Windows:lsass.exe: Boot noise--> <!--Win8+-->
+		</RegistryEvent>
+
+	<!--SYSMON EVENT ID 15 : ALTERNATE DATA STREAM CREATED [FileCreateStreamHash]-->
+		<!--EVENT 15: "File stream created"-->
+		<FileCreateStreamHash onmatch="exclude">
+		</FileCreateStreamHash>
+
+	<!--SYSMON EVENT ID 16 : SYSMON CONFIGURATION CHANGE-->
+		<!--DATA: UtcTime, Configuration, ConfigurationFileHash-->
+		<!--Cannot be filtered.-->
+
+	<!--SYSMON EVENT ID 17 & 18 : PIPE CREATED / PIPE CONNECTED [PipeEvent]-->
+		<!--EVENT 17: "Pipe Created"-->
+		<!--EVENT 18: "Pipe Connected"-->
+
+		<!--DATA: UtcTime, ProcessGuid, ProcessId, PipeName, Image-->
+		<PipeEvent onmatch="exclude">
+		</PipeEvent>
+
+	<!--SYSMON EVENT ID 19 & 20 & 21 : WMI EVENT MONITORING [WmiEvent]-->
+		<!--EVENT 19: "WmiEventFilter activity detected"-->
+		<!--EVENT 20: "WmiEventConsumer activity detected"-->
+		<!--EVENT 21: "WmiEventConsumerToFilter activity detected"-->
+
+		<!--ADDITIONAL REFERENCE: [ https://www.darkoperator.com/blog/2017/10/15/sysinternals-sysmon-610-tracking-of-permanent-wmi-events ] -->
+		<!--ADDITIONAL REFERENCE: [ https://rawsec.lu/blog/posts/2017/Sep/19/sysmon-v610-vs-wmi-persistence/ ] -->
+
+		<!--DATA: EventType, UtcTime, Operation, User, Name, Type, Destination, Consumer, Filter-->
+		<WmiEvent onmatch="exclude">
+		</WmiEvent>
+
+	<!--SYSMON EVENT ID 255 : ERROR-->
+		<!--"This event is generated when an error occurred within Sysmon. They can happen if the system is under heavy load
+			and certain tasked could not be performed or a bug exists in the Sysmon service. You can report any bugs on the
+			Sysinternals forum or over Twitter (@markrussinovich)."-->
+		<!--Cannot be filtered.-->
+
+	</EventFiltering>
+</Sysmon>

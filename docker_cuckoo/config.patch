@@ -1,0 +1,22 @@
+--- config.py.ori	2019-04-18 09:56:27.990801366 +0000
++++ config.py	2019-04-18 09:57:59.954798688 +0000
+@@ -318,6 +318,9 @@
+             "reboot": {
+                 "enabled": Boolean(True),
+             },
++            "sysmon": {
++                "enabled": Boolean(True),
++            },
+         },
+         "avd": {
+             "avd": {
+@@ -526,6 +529,9 @@
+             "buffer": {
+                 "enabled": Boolean(True),
+             },
++            "sysmon": {
++                "enabled": Boolean(True),
++            },
+             "debug": {
+                 "enabled": Boolean(True),
+             },

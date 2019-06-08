@@ -1,0 +1,45 @@
+## enable HSTS
+server {
+listen 80 default_server;
+listen [::]:80 default_server;
+# Redirect all HTTP requests to HTTPS with a 301 Moved Permanently response.
+#return 301 https://$host$request_uri;
+# Redirect on :8000 automatically
+return 301 https://$host:8000$request_uri;
+}
+## cuckoo WebServer
+upstream _uwsgi_cuckoo_web {
+server unix:/run/uwsgi/app/cuckoo-web/socket;
+}
+server {
+listen 0.0.0.0:8000 ssl;
+# Cuckoo Web Interface
+location / {
+auth_basic "Authentification";
+auth_basic_user_file /home/cuckoo/.passwdweb;
+client_max_body_size 1G;
+proxy_redirect off;
+proxy_set_header X-Forwarded-Proto $scheme;
+uwsgi_pass _uwsgi_cuckoo_web;
+include
+uwsgi_params;
+uwsgi_buffering off;
+}
+}
+## cuckoo API
+upstream _uwsgi_cuckoo_api {
+server unix:/run/uwsgi/app/cuckoo-api/socket;
+}
+server {
+listen 0.0.0.0:8090 ssl;
+# REST API app
+location / {
+auth_basic "Authentification";
+auth_basic_user_file /home/cuckoo/.passwdapi;
+client_max_body_size 1G;
+uwsgi_pass _uwsgi_cuckoo_api;
+include
+uwsgi_params;
+uwsgi_buffering off;
+}
+}
